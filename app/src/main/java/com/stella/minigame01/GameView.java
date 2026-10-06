@@ -75,7 +75,7 @@ public class GameView extends View {
     private final Paint stroke = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Random random = new Random();
     private final List<Item> items = new ArrayList<>();
-    private final Bitmap stellaScene;
+    private Bitmap stellaScene;
 
     private LinearGradient sky;
     private int roundIndex=0, score=0, correct=0, wrong=0, speechSuccess=0;
@@ -90,7 +90,7 @@ public class GameView extends View {
     public GameView(Context context, Listener listener) {
         super(context);
         this.listener = listener;
-        stellaScene = BitmapFactory.decodeResource(getResources(), R.drawable.stella_scene_bottom);
+        try {\n            stellaScene = BitmapFactory.decodeResource(getResources(), R.drawable.stella_scene_bottom);\n        } catch (Throwable ignored) {\n            stellaScene = null;\n        }
         setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         stroke.setStyle(Paint.Style.STROKE);
         stroke.setStrokeCap(Paint.Cap.ROUND);
@@ -194,7 +194,7 @@ public class GameView extends View {
         paint.setShader(null);
 
         drawNightSky(canvas);
-        drawScenicBottom(canvas);
+        try { drawScenicBottom(canvas); } catch (Throwable ignored) { }
 
         if (gameFinished) { drawFinalScore(canvas); return; }
         drawBrand(canvas);
