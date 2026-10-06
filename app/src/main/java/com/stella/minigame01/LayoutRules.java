@@ -8,11 +8,11 @@ public final class LayoutRules {
     }
 
     public static float gameplayBottom(float height) {
-        return height * 0.585f;
+        return height * 0.55f;
     }
 
     public static float micSafeTop(float height) {
-        return height * 0.615f;
+        return height * 0.625f;
     }
 
     public static float rowY(float height, int row, int rows) {
