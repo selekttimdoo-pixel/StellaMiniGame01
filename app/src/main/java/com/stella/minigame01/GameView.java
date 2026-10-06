@@ -91,7 +91,7 @@ public class GameView extends View {
         super(context);
         this.listener = listener;
         try {
-            stellaScene = BitmapFactory.decodeResource(getResources(), R.drawable.stella_scene_bottom);
+            stellaScene = SceneAssets.decodeStellaScene();
         } catch (Throwable ignored) {
             stellaScene = null;
         }
@@ -161,14 +161,14 @@ public class GameView extends View {
 
         int cols=3, rows=5;
         float left=getWidth()*0.15f, right=getWidth()*0.85f;
-        float top=getHeight()*0.25f, bottom=getHeight()*0.68f;
+        float top=LayoutRules.gameplayTop(getHeight()), bottom=LayoutRules.gameplayBottom(getHeight());
         float radius=Math.min(getWidth(),getHeight())*0.057f;
 
         List<Item> generated=new ArrayList<>();
         for (int i=0;i<FIELD_ITEMS;i++) {
             int row=i/cols, col=i%cols;
             float x=left+(right-left)*col/(cols-1f);
-            float y=top+(bottom-top)*row/(rows-1f);
+            float y=LayoutRules.rowY(getHeight(), row, rows);
             float jitterX=(random.nextFloat()-0.5f)*getWidth()*0.05f;
             float jitterY=(random.nextFloat()-0.5f)*getHeight()*0.018f;
             generated.add(new Item(x+jitterX,y+jitterY,radius,randomShape(),randomColor()));
@@ -201,7 +201,7 @@ public class GameView extends View {
         try { drawScenicBottom(canvas); } catch (Throwable ignored) { }
 
         if (gameFinished) { drawFinalScore(canvas); return; }
-        drawBrand(canvas);
+        drawScoreBadge(canvas);
         drawHeaderCard(canvas);
         drawItems(canvas);
         drawFooter(canvas);
@@ -228,53 +228,43 @@ public class GameView extends View {
 
     private void drawScenicBottom(Canvas canvas) {
         if (stellaScene==null) return;
-        float top=getHeight()*0.72f;
+        float top=getHeight()*0.66f;
         Rect src=new Rect(0,0,stellaScene.getWidth(),stellaScene.getHeight());
         RectF dst=new RectF(0,top,getWidth(),getHeight());
         paint.setAlpha(255);
         canvas.drawBitmap(stellaScene,src,dst,paint);
     }
 
-    private void drawBrand(Canvas canvas) {
+    private void drawScoreBadge(Canvas canvas) {
         float w=getWidth(), h=getHeight();
-        paint.setTextAlign(Paint.Align.LEFT);
-        paint.setTypeface(Typeface.create(Typeface.SERIF,Typeface.NORMAL));
-        paint.setColor(Color.WHITE);
-        paint.setTextSize(w*0.052f);
-        canvas.drawText("STELLA",w*0.055f,h*0.045f,paint);
-        canvas.drawText("HOUSE",w*0.055f,h*0.085f,paint);
-        paint.setTypeface(Typeface.create(Typeface.SANS_SERIF,Typeface.BOLD));
-        paint.setTextSize(w*0.021f);
-        paint.setColor(0xFFDCE8FF);
-        canvas.drawText("LANGUAGE FOR A BRIGHTER YOU",w*0.055f,h*0.112f,paint);
-
         paint.setTextAlign(Paint.Align.RIGHT);
+        paint.setTypeface(Typeface.create(Typeface.SANS_SERIF,Typeface.BOLD));
         paint.setColor(0xEFFFFFFF);
         paint.setTextSize(w*0.034f);
-        canvas.drawText("★  " + score,w*0.93f,h*0.055f,paint);
+        canvas.drawText("★  " + score,w*0.94f,h*0.045f,paint);
     }
 
     private void drawHeaderCard(Canvas canvas) {
         float w=getWidth(), h=getHeight();
-        RectF card=new RectF(w*0.18f,h*0.105f,w*0.82f,h*0.225f);
-        paint.setColor(0xFFF9F0DE);
-        paint.setShadowLayer(14,0,5,0x66000000);
-        canvas.drawRoundRect(card,34,34,paint);
+        RectF card=new RectF(w*0.14f,h*0.058f,w*0.86f,h*0.175f);
+        paint.setColor(0xF2FFF7E8);
+        paint.setShadowLayer(10,0,4,0x55000000);
+        canvas.drawRoundRect(card,30,30,paint);
         paint.clearShadowLayer();
 
-        stroke.setColor(0xFFE2B98A);
-        stroke.setStrokeWidth(Math.max(3f,w*0.006f));
-        canvas.drawRoundRect(card,34,34,stroke);
+        stroke.setColor(0xFFD9B078);
+        stroke.setStrokeWidth(Math.max(2.5f,w*0.0045f));
+        canvas.drawRoundRect(card,30,30,stroke);
 
         paint.setTextAlign(Paint.Align.CENTER);
         paint.setTypeface(Typeface.create(Typeface.SANS_SERIF,Typeface.BOLD));
         paint.setColor(0xFF10264A);
-        paint.setTextSize(w*0.047f);
-        canvas.drawText(taskText,w/2f,h*0.158f,paint);
+        paint.setTextSize(w*0.038f);
+        canvas.drawText(taskText,w/2f,h*0.105f,paint);
 
         paint.setColor(goalIsColor ? targetColor.color : 0xFF2F9CFF);
-        paint.setTextSize(w*0.061f);
-        canvas.drawText(targetEnglish,w/2f,h*0.202f,paint);
+        paint.setTextSize(w*0.052f);
+        canvas.drawText(targetEnglish,w/2f,h*0.151f,paint);
     }
 
     private void drawItems(Canvas canvas) {
@@ -343,26 +333,26 @@ public class GameView extends View {
 
     private void drawFooter(Canvas canvas) {
         float w=getWidth(), h=getHeight();
-        RectF panel=new RectF(w*0.08f,h*0.665f,w*0.92f,h*0.715f);
-        paint.setColor(0x66102C5D);
-        canvas.drawRoundRect(panel,30,30,paint);
+
+        RectF panel=new RectF(w*0.08f,h*0.625f,w*0.78f,h*0.675f);
+        paint.setColor(0x55102C5D);
+        canvas.drawRoundRect(panel,28,28,paint);
 
         paint.setTextAlign(Paint.Align.CENTER);
         paint.setTypeface(Typeface.create(Typeface.SANS_SERIF,Typeface.NORMAL));
         paint.setColor(Color.WHITE);
-        paint.setTextSize(w*0.026f);
-        String status = micStatus + "   •   " + targetsLeft + " preostalo";
-        canvas.drawText(status,w/2f,h*0.695f,paint);
+        paint.setTextSize(w*0.024f);
+        canvas.drawText(micStatus,panel.centerX(),h*0.657f,paint);
 
-        micButton.set(w*0.80f,h*0.625f,w*0.94f,h*0.705f);
+        micButton.set(w*0.80f,h*0.615f,w*0.95f,h*0.695f);
         paint.setColor(0xFF2D8CFF);
-        paint.setShadowLayer(16,0,0,0xAA2D8CFF);
-        canvas.drawCircle(micButton.centerX(),micButton.centerY(),w*0.055f,paint);
+        paint.setShadowLayer(14,0,0,0x992D8CFF);
+        canvas.drawCircle(micButton.centerX(),micButton.centerY(),w*0.054f,paint);
         paint.clearShadowLayer();
         paint.setColor(Color.WHITE);
-        paint.setTextSize(w*0.042f);
+        paint.setTextSize(w*0.039f);
         paint.setTypeface(Typeface.DEFAULT_BOLD);
-        canvas.drawText("MIC",micButton.centerX(),micButton.centerY()+w*0.014f,paint);
+        canvas.drawText("MIC",micButton.centerX(),micButton.centerY()+w*0.013f,paint);
     }
 
     private void drawFinalScore(Canvas canvas) {
