@@ -90,7 +90,11 @@ public class GameView extends View {
     public GameView(Context context, Listener listener) {
         super(context);
         this.listener = listener;
-        try {\n            stellaScene = BitmapFactory.decodeResource(getResources(), R.drawable.stella_scene_bottom);\n        } catch (Throwable ignored) {\n            stellaScene = null;\n        }
+        try {
+            stellaScene = BitmapFactory.decodeResource(getResources(), R.drawable.stella_scene_bottom);
+        } catch (Throwable ignored) {
+            stellaScene = null;
+        }
         setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         stroke.setStyle(Paint.Style.STROKE);
         stroke.setStrokeCap(Paint.Cap.ROUND);
