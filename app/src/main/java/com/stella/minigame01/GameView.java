@@ -2,7 +2,6 @@ package com.stella.minigame01;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
@@ -75,7 +74,7 @@ public class GameView extends View {
     private final Paint stroke = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Random random = new Random();
     private final List<Item> items = new ArrayList<>();
-    private Bitmap stellaScene;
+    private Bitmap artAtlas;
 
     private LinearGradient sky;
     private int roundIndex=0, score=0, correct=0, wrong=0, speechSuccess=0;
@@ -91,9 +90,9 @@ public class GameView extends View {
         super(context);
         this.listener = listener;
         try {
-            stellaScene = SceneAssets.decodeStellaScene();
+            artAtlas = android.graphics.BitmapFactory.decodeResource(getResources(), R.drawable.stella_v5_atlas);
         } catch (Throwable ignored) {
-            stellaScene = null;
+            artAtlas = null;
         }
         setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         stroke.setStyle(Paint.Style.STROKE);
@@ -193,46 +192,38 @@ public class GameView extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        paint.setShader(sky);
-        canvas.drawRect(0,0,getWidth(),getHeight(),paint);
-        paint.setShader(null);
-
-        drawNightSky(canvas);
-        try { drawScenicBottom(canvas); } catch (Throwable ignored) { }
+        drawBackground(canvas);
 
         if (gameFinished) { drawFinalScore(canvas); return; }
         drawScoreBadge(canvas);
         drawHeaderCard(canvas);
         drawItems(canvas);
+        drawStellaLayer(canvas);
         drawFooter(canvas);
     }
 
-    private void drawNightSky(Canvas canvas) {
-        paint.setStyle(Paint.Style.FILL);
-        for (int i=0;i<95;i++) {
-            random.setSeed(9001L+i*7919L);
-            float x=random.nextFloat()*getWidth();
-            float y=random.nextFloat()*getHeight()*0.72f;
-            float r=1.1f+random.nextFloat()*2.4f;
-            int a=90+random.nextInt(130);
-            paint.setColor(Color.argb(a,255,255,255));
-            canvas.drawCircle(x,y,r,paint);
+    private void drawBackground(Canvas canvas) {
+        if (artAtlas == null) {
+            paint.setShader(sky);
+            canvas.drawRect(0,0,getWidth(),getHeight(),paint);
+            paint.setShader(null);
+            return;
         }
-        paint.setColor(0x44A8C7FF);
-        RectF galaxy=new RectF(getWidth()*0.52f,getHeight()*0.07f,getWidth()*0.95f,getHeight()*0.58f);
-        canvas.save();
-        canvas.rotate(18, galaxy.centerX(), galaxy.centerY());
-        canvas.drawOval(galaxy, paint);
-        canvas.restore();
+        Rect src = new Rect(0, 0, 360, 640);
+        RectF dst = new RectF(0, 0, getWidth(), getHeight());
+        paint.setAlpha(255);
+        canvas.drawBitmap(artAtlas, src, dst, paint);
     }
 
-    private void drawScenicBottom(Canvas canvas) {
-        if (stellaScene==null) return;
-        float top=getHeight()*0.66f;
-        Rect src=new Rect(0,0,stellaScene.getWidth(),stellaScene.getHeight());
-        RectF dst=new RectF(0,top,getWidth(),getHeight());
+    private void drawStellaLayer(Canvas canvas) {
+        if (artAtlas == null) return;
+        float w=getWidth(), h=getHeight();
+        Rect src = new Rect(0, 640, 220, 1031);
+        float targetW = w * 0.34f;
+        float targetH = targetW * (391f / 220f);
+        RectF dst = new RectF(w*0.015f, h-targetH-h*0.018f, w*0.015f+targetW, h-h*0.018f);
         paint.setAlpha(255);
-        canvas.drawBitmap(stellaScene,src,dst,paint);
+        canvas.drawBitmap(artAtlas, src, dst, paint);
     }
 
     private void drawScoreBadge(Canvas canvas) {
@@ -246,8 +237,8 @@ public class GameView extends View {
 
     private void drawHeaderCard(Canvas canvas) {
         float w=getWidth(), h=getHeight();
-        RectF card=new RectF(w*0.14f,h*0.058f,w*0.86f,h*0.175f);
-        paint.setColor(0xF2FFF7E8);
+        RectF card=new RectF(w*0.19f,h*0.035f,w*0.81f,h*0.125f);
+        paint.setColor(0xD9FFF7E8);
         paint.setShadowLayer(10,0,4,0x55000000);
         canvas.drawRoundRect(card,30,30,paint);
         paint.clearShadowLayer();
@@ -260,11 +251,11 @@ public class GameView extends View {
         paint.setTypeface(Typeface.create(Typeface.SANS_SERIF,Typeface.BOLD));
         paint.setColor(0xFF10264A);
         paint.setTextSize(w*0.038f);
-        canvas.drawText(taskText,w/2f,h*0.105f,paint);
+        canvas.drawText(taskText,w/2f,h*0.073f,paint);
 
         paint.setColor(goalIsColor ? targetColor.color : 0xFF2F9CFF);
         paint.setTextSize(w*0.052f);
-        canvas.drawText(targetEnglish,w/2f,h*0.151f,paint);
+        canvas.drawText(targetEnglish,w/2f,h*0.108f,paint);
     }
 
     private void drawItems(Canvas canvas) {
@@ -272,48 +263,46 @@ public class GameView extends View {
     }
 
     private void drawShape(Canvas canvas, Item item) {
+        if (artAtlas != null) {
+            int col = colorColumn(item.color.en);
+            int row = item.shape==ShapeType.STAR ? 0 : item.shape==ShapeType.SUN ? 1 : 2;
+            int left = SpriteLayout.cellLeft(420, 7, col);
+            int top = SpriteLayout.rowTop(row);
+            Rect src = new Rect(left, 1031 + top, left + SpriteLayout.cropSize(), 1031 + top + 78);
+            float r = item.radius * 1.10f;
+            RectF dst = new RectF(item.x-r, item.y-r*1.15f, item.x+r, item.y+r*1.15f);
+            paint.setAlpha(255);
+            canvas.drawBitmap(artAtlas, src, dst, paint);
+            return;
+        }
+        drawFallbackShape(canvas, item);
+    }
+
+    private int colorColumn(String en) {
+        if ("RED".equals(en)) return 0;
+        if ("BLUE".equals(en)) return 1;
+        if ("GREEN".equals(en)) return 2;
+        if ("YELLOW".equals(en)) return 3;
+        if ("ORANGE".equals(en)) return 4;
+        if ("PURPLE".equals(en)) return 5;
+        return 6;
+    }
+
+    private void drawFallbackShape(Canvas canvas, Item item) {
         float r=item.radius;
         int c=item.color.color;
-
         paint.setStyle(Paint.Style.FILL);
         paint.setColor(c);
         paint.setShadowLayer(r*0.55f,0,0,withAlpha(c,210));
-
         if (item.shape==ShapeType.STAR) {
             Path p=starPath(item.x,item.y,r,r*0.46f);
             canvas.drawPath(p,paint);
-            paint.clearShadowLayer();
-            stroke.setColor(0xDDFFFFFF);
-            stroke.setStrokeWidth(Math.max(4f,r*0.075f));
-            canvas.drawPath(p,stroke);
-            paint.setColor(withAlpha(Color.WHITE,55));
-            canvas.drawCircle(item.x-r*0.22f,item.y-r*0.22f,r*0.16f,paint);
         } else if (item.shape==ShapeType.SUN) {
-            stroke.setColor(c);
-            stroke.setStrokeWidth(Math.max(6f,r*0.13f));
-            stroke.setShadowLayer(r*0.42f,0,0,withAlpha(c,180));
-            for (int i=0;i<12;i++) {
-                double a=i*Math.PI*2/12.0;
-                float x1=item.x+(float)Math.cos(a)*r*0.74f;
-                float y1=item.y+(float)Math.sin(a)*r*0.74f;
-                float x2=item.x+(float)Math.cos(a)*r*1.12f;
-                float y2=item.y+(float)Math.sin(a)*r*1.12f;
-                canvas.drawLine(x1,y1,x2,y2,stroke);
-            }
-            stroke.clearShadowLayer();
             canvas.drawCircle(item.x,item.y,r*0.72f,paint);
-            paint.clearShadowLayer();
-            stroke.setColor(0xDDFFFFFF);
-            stroke.setStrokeWidth(Math.max(4f,r*0.06f));
-            canvas.drawCircle(item.x,item.y,r*0.72f,stroke);
         } else {
             canvas.drawCircle(item.x,item.y,r*0.9f,paint);
-            paint.clearShadowLayer();
             paint.setColor(0xFF0B2A62);
             canvas.drawCircle(item.x+r*0.38f,item.y-r*0.14f,r*0.76f,paint);
-            stroke.setColor(0xCCFFFFFF);
-            stroke.setStrokeWidth(Math.max(3f,r*0.05f));
-            canvas.drawArc(new RectF(item.x-r*0.9f,item.y-r*0.9f,item.x+r*0.9f,item.y+r*0.9f),70,220,false,stroke);
         }
         paint.clearShadowLayer();
     }
@@ -334,7 +323,7 @@ public class GameView extends View {
     private void drawFooter(Canvas canvas) {
         float w=getWidth(), h=getHeight();
 
-        RectF panel=new RectF(w*0.08f,h*0.625f,w*0.78f,h*0.675f);
+        RectF panel=new RectF(w*0.20f,h*0.605f,w*0.76f,h*0.645f);
         paint.setColor(0x55102C5D);
         canvas.drawRoundRect(panel,28,28,paint);
 
@@ -342,9 +331,9 @@ public class GameView extends View {
         paint.setTypeface(Typeface.create(Typeface.SANS_SERIF,Typeface.NORMAL));
         paint.setColor(Color.WHITE);
         paint.setTextSize(w*0.024f);
-        canvas.drawText(micStatus,panel.centerX(),h*0.657f,paint);
+        canvas.drawText(micStatus,panel.centerX(),h*0.632f,paint);
 
-        micButton.set(w*0.80f,h*0.615f,w*0.95f,h*0.695f);
+        micButton.set(w*0.81f,h*0.59f,w*0.95f,h*0.67f);
         paint.setColor(0xFF2D8CFF);
         paint.setShadowLayer(14,0,0,0x992D8CFF);
         canvas.drawCircle(micButton.centerX(),micButton.centerY(),w*0.054f,paint);
