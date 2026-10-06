@@ -5,9 +5,13 @@ import org.junit.Test;
 
 public class LayoutRulesTest {
     @Test
-    public void lastGameplayRowStaysAboveMicSafeZone() {
+    public void lastGameplayHitboxStaysAboveMicSafeZone() {
+        float width = 720f;
         float height = 1600f;
-        assertTrue(LayoutRules.gameplayBottom(height) < LayoutRules.micSafeTop(height));
-        assertTrue(LayoutRules.rowY(height, 4, 5) < LayoutRules.micSafeTop(height));
+        float radius = Math.min(width, height) * 0.057f;
+        float hitRadius = radius * 1.25f;
+        float lastRowCenter = LayoutRules.rowY(height, 4, 5);
+
+        assertTrue(lastRowCenter + hitRadius < LayoutRules.micSafeTop(height));
     }
 }
