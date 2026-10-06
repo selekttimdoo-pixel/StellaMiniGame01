@@ -91,7 +91,7 @@ public class GameView extends View {
         super(context);
         this.listener = listener;
         try {
-            stellaScene = BitmapFactory.decodeResource(getResources(), R.drawable.stella_scene_bottom_v4);
+            stellaScene = SceneAssets.decodeStellaScene();
         } catch (Throwable ignored) {
             stellaScene = null;
         }
