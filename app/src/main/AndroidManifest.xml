@@ -1,7 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
     <application
         android:theme="@style/AppTheme"
-        android:label="Stella Mini Game 01"
+        android:label="Stella Mini Game 02"
         android:allowBackup="true"
         android:supportsRtl="true">
         <activity
